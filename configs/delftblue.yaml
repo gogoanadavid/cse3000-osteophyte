@@ -1,0 +1,7 @@
+project_root: /tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/
+source_data_root: /tudelft.net/staff-umbrella/osteoarthritis2024/shared/data/
+scratch_root: /scratch/dgogoana/osteophytes_project/
+
+csv_path: /tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/check_oai_osteophytes.csv
+h5_path: /tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/data/all-for-hip-prediction-20260420-0.4mm-224x224.h5
+split_path: /tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/lists/all-for-hip-prediction-20260420-split123.txt

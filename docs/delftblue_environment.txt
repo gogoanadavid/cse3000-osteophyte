@@ -1,0 +1,99 @@
+DelftBlue environment for Osteophytes Research Project
+=====================================================
+
+Purpose:
+This environment is used for reading the H5 dataset, using hdf5plugin for Blosc2-compressed arrays, and running PyTorch dataloaders/training.
+
+Project paths
+-------------
+Code:
+  /home/dgogoana/osteophytes_project/
+
+Scratch/output:
+  /scratch/dgogoana/osteophytes_project/
+
+Dataset index:
+  /scratch/dgogoana/osteophytes_project/audits/dataset_index.csv
+
+H5 image file:
+  /tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/data/all-for-hip-prediction-20260420-0.4mm-224x224.h5
+
+CSV labels:
+  /tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/check_oai_osteophytes.csv
+
+Split file:
+  /tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/lists/all-for-hip-prediction-20260420-split123.txt
+
+
+Base DelftBlue modules
+----------------------
+module purge
+module load 2025
+module load python/3.11.9
+module load py-numpy/1.26.4
+module load py-pandas/2.2.3
+module load py-h5py/3.12.1
+module load py-pillow/11.0.0
+module load py-torch/2.5.1
+
+
+Python virtual environment
+--------------------------
+The project uses a scratch virtual environment with system-site-packages enabled, so it can see the DelftBlue module packages such as torch, numpy, pandas, h5py, and PIL, while adding hdf5plugin.
+
+Create it once:
+
+python -m venv --system-site-packages /scratch/dgogoana/osteophytes_project/venvs/torch_h5env
+source /scratch/dgogoana/osteophytes_project/venvs/torch_h5env/bin/activate
+python -m pip install --upgrade pip
+python -m pip install hdf5plugin
+
+
+Activate environment in future sessions
+---------------------------------------
+cd /home/dgogoana/osteophytes_project
+
+module purge
+module load 2025
+module load python/3.11.9
+module load py-numpy/1.26.4
+module load py-pandas/2.2.3
+module load py-h5py/3.12.1
+module load py-pillow/11.0.0
+module load py-torch/2.5.1
+
+source /scratch/dgogoana/osteophytes_project/venvs/torch_h5env/bin/activate
+
+
+Important H5 note
+-----------------
+The H5 image datasets use HDF5 filter ID 32026 / blosc2.
+
+Any Python file that reads H5 image arrays must import hdf5plugin before reading arrays with h5py:
+
+  import hdf5plugin
+
+Without this, h5py can inspect metadata but fails when reading image arrays.
+
+
+Verification command
+--------------------
+python - <<'PY'
+import sys
+print("python:", sys.executable)
+
+for name in ["torch", "numpy", "pandas", "h5py", "PIL", "hdf5plugin"]:
+    try:
+        module = __import__(name)
+        print(f"{name}: OK", getattr(module, "__version__", ""))
+    except Exception as e:
+        print(f"{name}: MISSING ({type(e).__name__}: {e})")
+PY
+
+
+Known successful smoke test
+---------------------------
+python scripts/04_smoke_dataloader.py
+
+Expected final line:
+  Smoke dataloader test passed.
