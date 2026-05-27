@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=osteo_plots
 #SBATCH --partition=gpu-a100-small
-#SBATCH --gres=gpu:1
+#SBATCH --gpus-per-task=1
 #SBATCH --time=03:59:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=2
