@@ -182,6 +182,14 @@ sbatch jobs/02_mixed_supervision_025_coral.sh
 For binary-initialized mixed training:
 
 ```bash
+sbatch jobs/02_mixed_supervision_025_binary_init.sh
+```
+
+The job automatically uses the newest binary baseline `best_model.pt` under
+`/scratch/dgogoana/osteophytes_project/runs/01_binary_baseline/`. To force a
+specific binary checkpoint:
+
+```bash
 BINARY_CHECKPOINT=/scratch/dgogoana/osteophytes_project/runs/01_binary_baseline/<timestamp>/best_model.pt \
   sbatch jobs/02_mixed_supervision_025_binary_init.sh
 ```
