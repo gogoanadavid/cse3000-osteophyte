@@ -72,6 +72,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-head", choices=("threshold_independent", "coral", "dual_head"), default="threshold_independent")
     parser.add_argument("--dual-ordinal-head", choices=("threshold_independent", "coral"), default="threshold_independent")
     parser.add_argument("--init-from-binary-checkpoint", type=Path)
+    parser.add_argument("--binary-checkpoint", type=Path)
     parser.add_argument("--loss-balance-mode", choices=("equal", "proportional", "manual"), default="proportional")
     parser.add_argument("--weak-loss-weight", type=float, default=1.0)
     parser.add_argument("--ordinal-loss-weight", type=float, default=1.0)
@@ -220,6 +221,7 @@ def main() -> None:
     set_seed(args.seed, torch, np)
     device = choose_device(args.device, torch)
     weights_path = None if args.no_pretrained else args.weights_path
+    binary_checkpoint_path = args.binary_checkpoint or args.init_from_binary_checkpoint
 
     base_train_dataset = HipOsteophyteDataset(
         index_path=args.index_path,
@@ -265,10 +267,17 @@ def main() -> None:
         {
             "resolved_device": str(device),
             "effective_weights_path": str(weights_path) if weights_path is not None else None,
+            "binary_checkpoint": str(args.binary_checkpoint) if args.binary_checkpoint is not None else None,
+            "init_from_binary_checkpoint": (
+                str(args.init_from_binary_checkpoint)
+                if args.init_from_binary_checkpoint is not None
+                else None
+            ),
             "effective_strong_fraction": split.effective_strong_fraction,
             "experiment_name": run_name,
             "location_names": LOCATION_NAMES,
             "ordinal_thresholds": ("grade_gt_0", "grade_gt_1", "grade_gt_2"),
+            "weak_loss_weight": args.weak_loss_weight,
             "strong_count": split.strong_count,
             "weak_count": split.weak_count,
             "num_train_samples": len(train_dataset),
@@ -298,8 +307,8 @@ def main() -> None:
         weights_path=weights_path,
         dual_ordinal_head=args.dual_ordinal_head,
     ).to(device)
-    if args.init_from_binary_checkpoint is not None:
-        init_info = initialize_backbone_from_binary_checkpoint(model, args.init_from_binary_checkpoint)
+    if binary_checkpoint_path is not None:
+        init_info = initialize_backbone_from_binary_checkpoint(model, binary_checkpoint_path)
         save_json(run_dir / "binary_checkpoint_init.json", init_info)
 
     if args.freeze_backbone_epochs > 0:
@@ -344,8 +353,24 @@ def main() -> None:
     epochs_since_improvement = 0
 
     try:
-        for epoch in range(1, args.epochs + 1):
-            if args.freeze_backbone_epochs > 0 and epoch == args.freeze_backbone_epochs + 1:
+        for epoch_index in range(args.epochs):
+            epoch = epoch_index + 1
+            if args.binary_checkpoint is not None:
+                if epoch_index == 0:
+                    set_backbone_trainable(model, False)
+                    print("Backbone frozen for epoch 1.")
+                elif epoch_index == 2:
+                    set_backbone_trainable(model, True)
+                    optimizer = make_optimizer(
+                        model,
+                        torch,
+                        lr=args.lr,
+                        weight_decay=args.weight_decay,
+                        backbone_lr=args.backbone_lr,
+                        head_lr=args.head_lr,
+                    )
+                    print("Backbone unfrozen from epoch 3 onwards. Optimizer reset.")
+            elif args.freeze_backbone_epochs > 0 and epoch == args.freeze_backbone_epochs + 1:
                 set_backbone_trainable(model, True)
                 print("Backbone unfrozen.")
 
