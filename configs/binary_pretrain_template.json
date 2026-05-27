@@ -1,0 +1,16 @@
+{
+  "epochs": 40,
+  "batch_size": 128,
+  "num_workers": 4,
+  "lr": 0.0003,
+  "weight_decay": 0.0001,
+  "warmup_epochs": 3,
+  "schedule": "cosine",
+  "grad_clip_norm": 1.0,
+  "amp_dtype": "bf16",
+  "early_stopping_patience": 10,
+  "percentile_clip": [1.0, 99.0],
+  "augment": true,
+  "binary_threshold_only": true,
+  "pos_weight_cap": 30.0
+}

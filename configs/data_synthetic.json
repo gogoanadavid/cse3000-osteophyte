@@ -1,0 +1,61 @@
+{
+  "binary_label_keys": {
+    "inf_acet": "binary_inf_acet",
+    "inf_fem": "binary_inf_fem",
+    "sup_acet": "binary_sup_acet",
+    "sup_fem": "binary_sup_fem"
+  },
+  "canonicalize_side": true,
+  "flip_side_values": [
+    "L",
+    "left",
+    0
+  ],
+  "grade_label_keys": {
+    "inf_acet": "grade_inf_acet",
+    "inf_fem": "grade_inf_fem",
+    "sup_acet": "grade_sup_acet",
+    "sup_fem": "grade_sup_fem"
+  },
+  "h5_path": "outputs/synthetic/synthetic.h5",
+  "image_key": "images",
+  "index_csv": "outputs/synthetic/index.csv",
+  "left_side_values": [
+    "L",
+    "left",
+    0
+  ],
+  "locations": [
+    "sup_acet",
+    "inf_acet",
+    "sup_fem",
+    "inf_fem"
+  ],
+  "num_locations": 4,
+  "right_side_values": [
+    "R",
+    "right",
+    1
+  ],
+  "side_key": "side",
+  "split_key": "split",
+  "split_values": {
+    "test": [
+      "test",
+      2
+    ],
+    "train": [
+      "train",
+      0
+    ],
+    "val": [
+      "val",
+      "valid",
+      "validation",
+      1
+    ]
+  },
+  "subject_id_key": "subject_id",
+  "train_mean_std_json": "outputs/synthetic/train_mean_std.json",
+  "visit_id_key": "visit_id"
+}

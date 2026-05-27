@@ -1,0 +1,33 @@
+{
+  "h5_path": "/path/to/hip_data.h5",
+  "image_key": "images",
+  "split_key": "split",
+  "subject_id_key": "subject_id",
+  "visit_id_key": "visit_id",
+  "side_key": "side",
+  "left_side_values": ["L", "left", 0],
+  "right_side_values": ["R", "right", 1],
+  "canonicalize_side": true,
+  "flip_side_values": ["L", "left", 0],
+  "binary_label_keys": {
+    "sup_acet": "binary_sup_acet",
+    "inf_acet": "binary_inf_acet",
+    "sup_fem": "binary_sup_fem",
+    "inf_fem": "binary_inf_fem"
+  },
+  "grade_label_keys": {
+    "sup_acet": "grade_sup_acet",
+    "inf_acet": "grade_inf_acet",
+    "sup_fem": "grade_sup_fem",
+    "inf_fem": "grade_inf_fem"
+  },
+  "split_values": {
+    "train": ["train", 0],
+    "val": ["val", "valid", "validation", 1],
+    "test": ["test", 2]
+  },
+  "index_csv": "outputs/index.csv",
+  "train_mean_std_json": "outputs/train_mean_std.json",
+  "num_locations": 4,
+  "locations": ["sup_acet", "inf_acet", "sup_fem", "inf_fem"]
+}

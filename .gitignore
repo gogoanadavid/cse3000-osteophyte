@@ -23,6 +23,26 @@ runs/
 data/
 audits/
 
+configs/data.json
+
+outputs/**
+!outputs/
+!outputs/.gitkeep
+!outputs/checkpoints/
+!outputs/checkpoints/.gitkeep
+!outputs/metrics/
+!outputs/metrics/.gitkeep
+!outputs/predictions/
+!outputs/predictions/.gitkeep
+!outputs/figures/
+!outputs/figures/.gitkeep
+!outputs/logs/
+!outputs/logs/.gitkeep
+
+budgets/**
+!budgets/
+!budgets/.gitkeep
+
 *.pt
 *.pth
 *.h5

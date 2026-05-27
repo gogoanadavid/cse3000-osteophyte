@@ -1,0 +1,7 @@
+{
+  "batch_size": 128,
+  "num_workers": 4,
+  "percentile_clip": [1.0, 99.0],
+  "bootstrap": 1000,
+  "bootstrap_seed": 123
+}

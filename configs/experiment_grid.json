@@ -1,0 +1,10 @@
+{
+  "seeds": [0, 1, 2],
+  "budgets": ["0", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "full"],
+  "main_strategy": "score_stratified",
+  "strategies": ["random", "binary_positive_enriched", "score_stratified", "oracle_grade_stratified"],
+  "main_modes": ["mixed"],
+  "ablation_modes": ["graded_only"],
+  "graded_only_budgets": ["128", "512", "2048", "full"],
+  "sampling_comparison_budgets": ["256", "1024", "4096"]
+}
