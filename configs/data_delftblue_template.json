@@ -1,0 +1,31 @@
+{
+  "schema": "hierarchical_csv",
+  "h5_path": "/tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/data/all-for-hip-prediction-20260420-0.4mm-224x224.h5",
+  "scan_root": "scans",
+  "labels_csv": "/tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/check_oai_osteophytes.csv",
+  "split_file": "/tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/lists/all-for-hip-prediction-20260420-split123.txt",
+  "label_subject_col": "subject",
+  "label_visit_col": "visit",
+  "label_side_col": "side",
+  "left_side_values": ["left", "L", 0],
+  "right_side_values": ["right", "R", 1],
+  "canonicalize_side": true,
+  "flip_side_values": ["left", "L", 0],
+  "grade_label_keys": {
+    "sup_acet": "osteo_acet_sup",
+    "inf_acet": "osteo_acet_inf",
+    "sup_fem": "osteo_fem_sup",
+    "inf_fem": "osteo_fem_inf"
+  },
+  "binary_label_keys": {
+    "sup_acet": "derived_from_grade",
+    "inf_acet": "derived_from_grade",
+    "sup_fem": "derived_from_grade",
+    "inf_fem": "derived_from_grade"
+  },
+  "index_csv": "outputs/index.csv",
+  "train_mean_std_json": "outputs/train_mean_std.json",
+  "num_locations": 4,
+  "locations": ["sup_acet", "inf_acet", "sup_fem", "inf_fem"],
+  "percentile_clip": [1.0, 99.0]
+}

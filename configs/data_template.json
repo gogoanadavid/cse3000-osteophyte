@@ -1,4 +1,5 @@
 {
+  "schema": "flat_h5",
   "h5_path": "/path/to/hip_data.h5",
   "image_key": "images",
   "split_key": "split",

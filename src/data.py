@@ -66,7 +66,8 @@ class HipH5Dataset(Dataset):
     ) -> None:
         self.data_config = data_config
         self.h5_path = Path(data_config["h5_path"])
-        self.image_key = data_config["image_key"]
+        self.image_key = data_config.get("image_key", "")
+        self.schema = data_config.get("schema", "flat_h5")
         self.locations = list(data_config.get("locations", ["sup_acet", "inf_acet", "sup_fem", "inf_fem"]))
         self.binary_cols = [f"binary_{loc}" for loc in self.locations]
         self.grade_cols = [f"grade_{loc}" for loc in self.locations]
@@ -101,7 +102,7 @@ class HipH5Dataset(Dataset):
     def _ensure_h5(self) -> h5py.File:
         if self._h5 is None:
             self._h5 = h5py.File(self.h5_path, "r")
-            if self.image_key not in self._h5:
+            if self.schema == "flat_h5" and self.image_key not in self._h5:
                 self._h5.close()
                 self._h5 = None
                 raise KeyError(f"Image key '{self.image_key}' not found in {self.h5_path}")
@@ -118,9 +119,12 @@ class HipH5Dataset(Dataset):
         except Exception:
             pass
 
-    def _load_image(self, h5_index: int) -> np.ndarray:
+    def _load_image(self, row: pd.Series) -> np.ndarray:
         h5 = self._ensure_h5()
-        image = np.asarray(h5[self.image_key][h5_index])
+        if "h5_path_key" in row and isinstance(row["h5_path_key"], str) and row["h5_path_key"]:
+            image = np.asarray(h5[row["h5_path_key"]])
+        else:
+            image = np.asarray(h5[self.image_key][int(row["h5_index"])])
         image = np.squeeze(image)
         if image.ndim != 2:
             raise ValueError(f"Expected a 2D grayscale image after squeeze, got shape {image.shape}")
@@ -137,7 +141,7 @@ class HipH5Dataset(Dataset):
     def __getitem__(self, idx: int) -> dict[str, Any]:
         row = self.df.iloc[idx]
         h5_index = int(row["h5_index"])
-        image = self._load_image(h5_index)
+        image = self._load_image(row)
 
         if self.data_config.get("canonicalize_side", True):
             side = row.get("side", "")
