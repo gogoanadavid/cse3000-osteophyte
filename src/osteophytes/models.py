@@ -8,7 +8,7 @@ ResNet18 checkpoints.
 
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PosixPath, WindowsPath
 from typing import Any
 
 import torch
@@ -225,6 +225,19 @@ def _torch_load_weights(weights_path: Path) -> dict[str, Any]:
         return torch.load(weights_path, map_location="cpu", weights_only=True)
     except TypeError:
         return torch.load(weights_path, map_location="cpu")
+    except Exception as exc:
+        message = str(exc)
+        if "Weights only load failed" not in message and "Unsupported global" not in message:
+            raise
+        try:
+            torch.serialization.add_safe_globals([PosixPath, WindowsPath])
+            return torch.load(weights_path, map_location="cpu", weights_only=True)
+        except Exception:
+            print(
+                "Falling back to torch.load(weights_only=False) for a trusted "
+                f"local project checkpoint: {weights_path}"
+            )
+            return torch.load(weights_path, map_location="cpu", weights_only=False)
 
 
 def _checkpoint_state_dict(checkpoint: Any) -> dict[str, Any]:
