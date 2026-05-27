@@ -84,10 +84,21 @@ def _compute_train_mean_std(
     image_key: str,
     train_rows: pd.DataFrame | list[int],
     percentile_clip: list[float] | None,
+    max_samples: int | None = None,
+    seed: int = 0,
 ) -> dict[str, float]:
     total = 0
     sum_x = 0.0
     sum_x2 = 0.0
+    sampled_count = len(train_rows)
+    if max_samples is not None and max_samples > 0 and len(train_rows) > max_samples:
+        if isinstance(train_rows, pd.DataFrame):
+            train_rows = train_rows.sample(n=max_samples, random_state=seed).sort_values("h5_index")
+        else:
+            rng = np.random.default_rng(seed)
+            sampled = rng.choice(np.asarray(train_rows), size=max_samples, replace=False)
+            train_rows = sorted(int(x) for x in sampled.tolist())
+        sampled_count = max_samples
     iterator = train_rows.iterrows() if isinstance(train_rows, pd.DataFrame) else enumerate(train_rows)
     for _, row in iterator:
         image = _read_image_array(h5, image_key, row if isinstance(train_rows, pd.DataFrame) else int(row))
@@ -102,10 +113,16 @@ def _compute_train_mean_std(
         sum_x += float(image.sum())
         sum_x2 += float(np.square(image).sum())
     if total == 0:
-        return {"mean": 0.0, "std": 1.0, "num_pixels": 0}
+        return {"mean": 0.0, "std": 1.0, "num_pixels": 0, "num_samples_used": 0}
     mean = sum_x / total
     var = max(sum_x2 / total - mean * mean, 1e-12)
-    return {"mean": float(mean), "std": float(np.sqrt(var)), "num_pixels": int(total)}
+    return {
+        "mean": float(mean),
+        "std": float(np.sqrt(var)),
+        "num_pixels": int(total),
+        "num_samples_used": int(sampled_count),
+        "mean_std_max_samples": int(max_samples) if max_samples is not None else None,
+    }
 
 
 def _visit_aliases(visit: Any) -> set[str]:
@@ -295,7 +312,14 @@ def build_index(data_config: dict[str, Any], out_csv: str | Path) -> tuple[pd.Da
         stats_path = Path(data_config.get("train_mean_std_json", "outputs/train_mean_std.json"))
         clip = data_config.get("percentile_clip")
         train_rows = df[df["split"] == "train"].copy()
-        stats = _compute_train_mean_std(h5, data_config.get("image_key", ""), train_rows, clip)
+        stats = _compute_train_mean_std(
+            h5,
+            data_config.get("image_key", ""),
+            train_rows,
+            clip,
+            max_samples=data_config.get("mean_std_max_samples"),
+            seed=int(data_config.get("mean_std_seed", 0)),
+        )
         stats["image_key"] = data_config.get("image_key", "")
         stats["schema"] = data_config.get("schema", "flat_h5")
         stats["num_train_samples"] = int(len(train_rows))

@@ -27,5 +27,7 @@
   "train_mean_std_json": "outputs/train_mean_std.json",
   "num_locations": 4,
   "locations": ["sup_acet", "inf_acet", "sup_fem", "inf_fem"],
-  "percentile_clip": [1.0, 99.0]
+  "percentile_clip": [1.0, 99.0],
+  "mean_std_max_samples": 2048,
+  "mean_std_seed": 0
 }
