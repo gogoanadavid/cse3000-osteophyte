@@ -51,7 +51,7 @@ python scripts/07_train_mixed_supervision.py \
   --threshold-weights 1.0,3.0,2.0 \
   --binary-checkpoint ${BINARY_CHECKPOINT} \
   --run-tag ${tag} \
-  --epochs 10 \
+  --epochs 5 \
   --batch-size 32 \
   --num-workers 2 \
   --h5-path ${H5_PATH}

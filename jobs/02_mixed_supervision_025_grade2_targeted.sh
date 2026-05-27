@@ -34,7 +34,7 @@ python scripts/07_train_mixed_supervision.py \
   --threshold-weights 1.0,3.0,2.0 \
   --binary-checkpoint /scratch/dgogoana/osteophytes_project/runs/01_binary_baseline/20260527_145251/best_model.pt \
   --run-tag location_binary_mixed_025_grade2_targeted_threshold_independent \
-  --epochs 10 \
+  --epochs 5 \
   --batch-size 32 \
   --num-workers 2 \
   --h5-path /scratch/dgogoana/osteophytes_project/data/all-for-hip-prediction-20260420-0.4mm-224x224.h5

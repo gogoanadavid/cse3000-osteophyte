@@ -33,7 +33,7 @@ python scripts/07_train_mixed_supervision.py \
   --weak-loss-weight 0.1 \
   --threshold-weights 1.0,3.0,2.0 \
   --run-tag location_binary_mixed_025_grade2_targeted_no_init_threshold_independent \
-  --epochs 10 \
+  --epochs 5 \
   --batch-size 32 \
   --num-workers 2 \
   --h5-path /scratch/dgogoana/osteophytes_project/data/all-for-hip-prediction-20260420-0.4mm-224x224.h5
