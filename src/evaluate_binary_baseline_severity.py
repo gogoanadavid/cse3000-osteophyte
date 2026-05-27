@@ -118,8 +118,9 @@ def _write_summary(out_path: Path, split: str) -> None:
     mean = df[df["location"] == "mean"].copy()
     if mean.empty:
         return
-    numeric_cols = mean.select_dtypes(include=[np.number]).columns.tolist()
-    summary = mean.groupby(["split", "mode", "strategy", "budget_name", "budget_size"], dropna=False)[numeric_cols].mean().reset_index()
+    group_cols = ["split", "mode", "strategy", "budget_name", "budget_size"]
+    numeric_cols = [c for c in mean.select_dtypes(include=[np.number]).columns.tolist() if c not in set(group_cols)]
+    summary = mean.groupby(group_cols, dropna=False)[numeric_cols].mean().reset_index()
     summary.to_csv(out_path.parent / f"binary_baseline_severity_{split}_summary.csv", index=False)
 
 
