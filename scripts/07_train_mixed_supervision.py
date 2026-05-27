@@ -65,6 +65,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--h5-path", type=Path, default=DEFAULT_H5_PATH)
     parser.add_argument("--weights-path", type=Path, default=DEFAULT_WEIGHTS_PATH)
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
+    parser.add_argument("--run-tag", default=None, help="Override the generated experiment/run tag.")
     parser.add_argument("--supervision-mode", choices=SUPERVISION_MODES, default="mixed")
     parser.add_argument("--strong-fraction", type=float, default=0.05)
     parser.add_argument("--weak-label-mode", choices=("location_binary", "image_binary"), default="location_binary")
@@ -82,7 +83,16 @@ def parse_args() -> argparse.Namespace:
         choices=("none", "inverse_frequency", "effective_number", "manual_threshold"),
         default="none",
     )
-    parser.add_argument("--threshold-weights", default=None)
+    parser.add_argument(
+        "--threshold-weights",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated loss weights for the three ordinal thresholds: "
+            "grade>0, grade>1, grade>2. Example: 1.0,3.0,2.0 upweights the "
+            "grade 1-2 boundary. Default None means uniform weights."
+        ),
+    )
     parser.add_argument("--max-loss-weight", type=float, default=5.0)
     parser.add_argument("--use-focal-loss", type=str2bool, default=False)
     parser.add_argument("--focal-gamma", type=float, default=2.0)
@@ -251,7 +261,7 @@ def main() -> None:
     if args.strong_fraction > 0 and args.supervision_mode == "mixed" and split.strong_count == 0:
         raise RuntimeError("Nonzero strong_fraction selected zero strong training samples.")
 
-    run_name = fraction_run_name(args, split.effective_strong_fraction)
+    run_name = args.run_tag or fraction_run_name(args, split.effective_strong_fraction)
     run_dir = make_run_dir(args.output_root, run_name)
     train_dataset = MixedSupervisionDataset(
         base_train_dataset,
@@ -278,6 +288,8 @@ def main() -> None:
             "location_names": LOCATION_NAMES,
             "ordinal_thresholds": ("grade_gt_0", "grade_gt_1", "grade_gt_2"),
             "weak_loss_weight": args.weak_loss_weight,
+            "threshold_weights": args.threshold_weights,
+            "run_tag": args.run_tag,
             "strong_count": split.strong_count,
             "weak_count": split.weak_count,
             "num_train_samples": len(train_dataset),

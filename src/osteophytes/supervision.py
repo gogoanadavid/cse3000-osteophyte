@@ -24,6 +24,7 @@ STRONG_SAMPLING_STRATEGIES = (
     "max_grade_stratified",
     "severity_aware",
     "per_location_balanced",
+    "grade2_targeted",
 )
 
 
@@ -259,6 +260,50 @@ def _sample_per_location_balanced(
     return selected
 
 
+def _sample_grade2_targeted(
+    records: list[dict[str, Any]],
+    target_count: int,
+    rng: random.Random,
+) -> list[dict[str, Any]]:
+    """Guarantee per-location coverage of grade-2 and grade-3 samples."""
+    from osteophytes.labels import LOCATION_NAMES
+
+    selected_ids: set[str] = set()
+    priority: list[dict[str, Any]] = []
+
+    for location in LOCATION_NAMES:
+        grade3_here = [
+            record
+            for record in records
+            if (record["grades"].get(location) or 0) == 3
+            and record["sample_id"] not in selected_ids
+        ]
+        rng.shuffle(grade3_here)
+        for record in grade3_here:
+            selected_ids.add(record["sample_id"])
+            priority.append(record)
+
+        grade2_here = [
+            record
+            for record in records
+            if (record["grades"].get(location) or 0) == 2
+            and record["sample_id"] not in selected_ids
+        ]
+        rng.shuffle(grade2_here)
+        for record in grade2_here:
+            selected_ids.add(record["sample_id"])
+            priority.append(record)
+
+    if len(priority) >= target_count:
+        return priority[:target_count]
+
+    lower = [record for record in records if record["sample_id"] not in selected_ids]
+    rng.shuffle(lower)
+
+    remaining_budget = target_count - len(priority)
+    return priority + lower[:remaining_budget]
+
+
 def _select_strong_records(
     candidates: list[dict[str, Any]],
     fraction: float,
@@ -277,6 +322,8 @@ def _select_strong_records(
         return _sample_severity_aware(candidates, target_count, rng)
     if strategy == "per_location_balanced":
         return _sample_per_location_balanced(candidates, target_count, rng)
+    if strategy == "grade2_targeted":
+        return _sample_grade2_targeted(candidates, target_count, rng)
     raise ValueError(f"Unsupported strong sampling strategy: {strategy}")
 
 
