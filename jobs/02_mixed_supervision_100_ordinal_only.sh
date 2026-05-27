@@ -22,4 +22,11 @@ module load py-torch/2.5.1
 export PYTHONPATH="/scratch/dgogoana/osteophytes_project/venvs/torch_h5env/lib/python3.11/site-packages:${PYTHONPATH:-}"
 export TORCH_HOME=/scratch/dgogoana/osteophytes_project/torch_cache
 mkdir -p /home/dgogoana/osteophytes_project/logs "$TORCH_HOME" /scratch/dgogoana/osteophytes_project/runs/02_mixed_supervision
-python scripts/07_train_mixed_supervision.py --supervision-mode mixed --strong-fraction 1.0 --weak-label-mode location_binary --strong-sampling-strategy severity_aware --model-head threshold_independent --selection-metric mean_spearman --weak-loss-weight 0.0 --epochs 10 --batch-size 32 --num-workers 2 --h5-path /scratch/dgogoana/osteophytes_project/data/all-for-hip-prediction-20260420-0.4mm-224x224.h5
+python scripts/07_train_mixed_supervision.py \
+  --strong-fraction 1.0 \
+  --strong-sampling-strategy severity_aware \
+  --weak-label-mode location_binary \
+  --model-head threshold_independent \
+  --selection-metric mean_spearman \
+  --output-root /scratch/dgogoana/osteophytes_project/runs/02_mixed_supervision/ \
+  --weak-loss-weight 0.0
