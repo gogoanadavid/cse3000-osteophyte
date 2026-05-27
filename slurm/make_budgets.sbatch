@@ -4,8 +4,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=03:59:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
+#SBATCH --cpus-per-task=2
+#SBATCH --mem-per-cpu=4G
 #SBATCH --array=0-2
 #SBATCH --output=/home/dgogoana/osteophytes_project/logs/osteo_budgets_%A_%a.out
 #SBATCH --error=/home/dgogoana/osteophytes_project/logs/osteo_budgets_%A_%a.err

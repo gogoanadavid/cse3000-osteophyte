@@ -4,8 +4,8 @@
 #SBATCH --gres=gpu:1
 #SBATCH --time=03:59:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=32G
+#SBATCH --cpus-per-task=2
+#SBATCH --mem-per-cpu=4G
 #SBATCH --array=0-2
 #SBATCH --output=/home/dgogoana/osteophytes_project/logs/osteo_binary_%A_%a.out
 #SBATCH --error=/home/dgogoana/osteophytes_project/logs/osteo_binary_%A_%a.err
@@ -38,11 +38,13 @@ python -m src.train_binary \
   --train-config configs/binary_pretrain_template.json \
   --seed "$SEED" \
   --out-dir "outputs/checkpoints/binary_seed${SEED}" \
-  --num-workers "$SLURM_CPUS_PER_TASK"
+  --batch-size 32 \
+  --num-workers 2
 
 python -m src.predict \
   --data-config configs/data.json \
   --checkpoint "outputs/checkpoints/binary_seed${SEED}/best.pt" \
   --split train \
   --out "outputs/predictions/binary_train_scores_seed${SEED}.csv" \
-  --num-workers "$SLURM_CPUS_PER_TASK"
+  --batch-size 32 \
+  --num-workers 2
