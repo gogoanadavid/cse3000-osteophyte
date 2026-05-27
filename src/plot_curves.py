@@ -18,6 +18,8 @@ def _import_pyplot():
 
 
 def _plot_metric(df: pd.DataFrame, metric: str, ylabel: str, out: Path, lower_better: bool = False) -> None:
+    if metric not in df.columns:
+        return
     plt = _import_pyplot()
     fig, ax = plt.subplots(figsize=(7.5, 5))
     group_cols = ["mode", "strategy"]
@@ -25,6 +27,8 @@ def _plot_metric(df: pd.DataFrame, metric: str, ylabel: str, out: Path, lower_be
         g = g.copy()
         g[metric] = pd.to_numeric(g[metric], errors="coerce")
         g["budget_fraction"] = pd.to_numeric(g["budget_fraction"], errors="coerce")
+        if not np.isfinite(g[metric]).any():
+            continue
         summary = g.groupby("budget_fraction")[metric].agg(["mean", "sem"]).reset_index().sort_values("budget_fraction")
         ax.plot(summary["budget_fraction"], summary["mean"], marker="o", label=f"{mode}/{strategy}")
         if len(g["seed"].dropna().unique()) > 1:
@@ -58,6 +62,8 @@ def main() -> None:
     plt = _import_pyplot()
     fig, ax = plt.subplots(figsize=(7.5, 5))
     for metric in ["auc_ge1_mean", "auc_ge2_mean", "auc_ge3_mean"]:
+        if metric not in df.columns:
+            continue
         g = df.groupby("budget_fraction")[metric].mean(numeric_only=True).reset_index().sort_values("budget_fraction")
         ax.plot(g["budget_fraction"], g[metric], marker="o", label=metric.replace("_mean", ""))
     ax.set_xlabel("Fraction of graded training annotations")
@@ -70,6 +76,8 @@ def main() -> None:
 
     fig, ax = plt.subplots(figsize=(7.5, 5))
     for metric in ["ap_ge2_mean", "ap_ge3_mean"]:
+        if metric not in df.columns:
+            continue
         g = df.groupby("budget_fraction")[metric].mean(numeric_only=True).reset_index().sort_values("budget_fraction")
         ax.plot(g["budget_fraction"], g[metric], marker="o", label=metric.replace("_mean", ""))
     ax.set_xlabel("Fraction of graded training annotations")
@@ -82,6 +90,8 @@ def main() -> None:
 
     fig, ax = plt.subplots(figsize=(7.5, 5))
     for metric in ["recall_grade0_mean", "recall_grade1_mean", "recall_grade2_mean", "recall_grade3_mean"]:
+        if metric not in df.columns:
+            continue
         g = df.groupby("budget_fraction")[metric].mean(numeric_only=True).reset_index().sort_values("budget_fraction")
         ax.plot(g["budget_fraction"], g[metric], marker="o", label=metric.replace("_mean", ""))
     ax.set_xlabel("Fraction of graded training annotations")
@@ -94,6 +104,8 @@ def main() -> None:
 
     fig, ax = plt.subplots(figsize=(7.5, 5))
     for strategy, g in df.groupby("strategy"):
+        if "quality_mean" not in g.columns:
+            continue
         summary = g.groupby("budget_fraction")["quality_mean"].mean(numeric_only=True).reset_index().sort_values("budget_fraction")
         ax.plot(summary["budget_fraction"], summary["quality_mean"], marker="o", label=strategy)
     ax.set_xlabel("Fraction of graded training annotations")

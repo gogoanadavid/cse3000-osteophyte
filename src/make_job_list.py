@@ -17,6 +17,8 @@ def ordinal_jobs(grid: dict, out: str | Path) -> pd.DataFrame:
     main_strategy = grid["main_strategy"]
     for seed in seeds:
         for budget in grid["budgets"]:
+            if str(budget) == "0":
+                continue
             key = (seed, main_strategy, budget, "mixed")
             if key not in seen:
                 seen.add(key)

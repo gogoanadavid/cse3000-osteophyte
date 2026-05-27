@@ -60,6 +60,30 @@ def _read_budget(path: str | Path | None) -> set[int]:
     return {int(x) for x in df["h5_index"].tolist()}
 
 
+def prepare_visible_training_arrays(
+    train_rows: pd.DataFrame,
+    locations: list[str],
+    selected_h5_indices: set[int],
+    mode: str,
+) -> tuple[pd.DataFrame, np.ndarray, np.ndarray]:
+    """Return train rows plus binary/grade arrays after leakage-safe masking."""
+    rows = train_rows.copy()
+    if mode == "graded_only":
+        if not selected_h5_indices:
+            raise ValueError("graded_only mode requires a non-empty budget")
+        rows = rows[rows["h5_index"].astype(int).isin(selected_h5_indices)].copy()
+    binary_arr = rows[[f"binary_{loc}" for loc in locations]].to_numpy(dtype=int, copy=True)
+    grade_arr = rows[[f"grade_{loc}" for loc in locations]].to_numpy(dtype=int, copy=True)
+    if mode == "mixed":
+        hide_mask = ~rows["h5_index"].astype(int).isin(selected_h5_indices).to_numpy()
+        grade_arr[hide_mask, :] = -1
+    elif mode == "graded_only":
+        pass
+    else:
+        grade_arr[:, :] = -1
+    return rows, binary_arr, grade_arr
+
+
 def _make_sampler(df: pd.DataFrame, num_samples: int) -> WeightedRandomSampler:
     weights = []
     for grade in df["max_grade"].astype(int).tolist():
@@ -186,6 +210,7 @@ def main() -> None:
     logger = setup_file_logger(out_dir, "train_ordinal")
     save_config(data_config, out_dir / "data_config.json")
     save_config(train_config, out_dir / "train_config.json")
+    save_config({"data": data_config, "train": train_config}, out_dir / "resolved_config.json")
     save_json(describe_command_line(args), out_dir / "command.json")
 
     set_seed(args.seed)
@@ -198,19 +223,7 @@ def main() -> None:
     visible = selected if mode in {"mixed", "graded_only"} else set()
     train_index = pd.read_csv(data_config.get("index_csv", "outputs/index.csv"))
     train_rows = train_index[train_index["split"].astype(str) == "train"].copy()
-    if mode == "graded_only":
-        if not selected:
-            raise ValueError("graded_only mode requires a non-empty budget")
-        train_rows = train_rows[train_rows["h5_index"].astype(int).isin(selected)].copy()
-    binary_arr = train_rows[[f"binary_{loc}" for loc in locations]].to_numpy(dtype=int, copy=True)
-    grade_arr = train_rows[[f"grade_{loc}" for loc in locations]].to_numpy(dtype=int, copy=True)
-    if mode == "mixed":
-        hide_mask = ~train_rows["h5_index"].astype(int).isin(selected).to_numpy()
-        grade_arr[hide_mask, :] = -1
-    elif mode == "graded_only":
-        pass
-    else:
-        grade_arr[:, :] = -1
+    train_rows, binary_arr, grade_arr = prepare_visible_training_arrays(train_rows, locations, selected, mode)
     pos_weight, counts = compute_visible_pos_weights(
         binary_arr,
         grade_arr,
@@ -220,6 +233,8 @@ def main() -> None:
         absent_high_threshold_weight=float(train_config.get("absent_high_threshold_weight", 0.35)),
     )
     save_json(counts, out_dir / "visible_label_counts_pos_weights.json")
+    save_json(counts, out_dir / "visible_label_counts.json")
+    save_json({"pos_weight": pos_weight.tolist(), "counts": counts}, out_dir / "pos_weights.json")
 
     common_ds_kwargs = {
         "data_config": data_config,

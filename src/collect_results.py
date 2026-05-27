@@ -37,11 +37,40 @@ OUTPUT_COLUMNS = [
 ]
 
 
-def collect(metrics_root: str | Path, checkpoints_root: str | Path | None = None) -> pd.DataFrame:
+def collect(
+    metrics_root: str | Path,
+    checkpoints_root: str | Path | None = None,
+    binary_baseline_root: str | Path | None = None,
+) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     for path in Path(metrics_root).rglob("metrics_summary.json"):
         row = load_json(path)
         row["_source"] = str(path)
+        rows.append(row)
+    binary_root = Path(binary_baseline_root) if binary_baseline_root else Path(metrics_root)
+    for path in binary_root.rglob("binary_baseline_severity_*_seed*.csv"):
+        df_binary = pd.read_csv(path)
+        mean = df_binary[df_binary["location"] == "mean"]
+        if mean.empty:
+            continue
+        row = mean.iloc[0].to_dict()
+        row.update(
+            {
+                "strategy": "binary_baseline",
+                "mode": "binary_only",
+                "budget_name": "0",
+                "budget_size": 0,
+                "bmae_mean": row.get("bmae"),
+                "quality_mean": row.get("quality"),
+                "spearman_mean": row.get("spearman_all"),
+                "auc_ge1_mean": row.get("auc_ge1"),
+                "auc_ge2_mean": row.get("auc_ge2"),
+                "auc_ge3_mean": row.get("auc_ge3"),
+                "ap_ge2_mean": row.get("ap_ge2"),
+                "ap_ge3_mean": row.get("ap_ge3"),
+                "_source": str(path),
+            }
+        )
         rows.append(row)
     if not rows:
         return pd.DataFrame(columns=OUTPUT_COLUMNS)
@@ -62,9 +91,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--metrics-root", required=True)
     parser.add_argument("--checkpoints-root", default=None)
+    parser.add_argument("--binary-baseline-root", default=None)
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
-    df = collect(args.metrics_root, args.checkpoints_root)
+    df = collect(args.metrics_root, args.checkpoints_root, args.binary_baseline_root)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(out, index=False)

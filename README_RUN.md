@@ -48,6 +48,102 @@ python -m src.predict \
 
 Binary pretraining uses all training samples but only supervises threshold `y>=1`.
 
+## Mixed-Supervision Experiments After Binary Pretraining
+
+Current binary baselines on DelftBlue are strong enough to use as the budget-0 baseline and ordinal initialization:
+
+```text
+seed 0 validation AUROC ~= 0.8255
+seed 1 validation AUROC ~= 0.8421
+seed 2 validation AUROC ~= 0.8355
+```
+
+Generate binary validation predictions:
+
+```bash
+for seed in 0 1 2; do
+  python -m src.predict \
+    --data-config configs/data.json \
+    --checkpoint outputs/checkpoints/binary_seed${seed}/best.pt \
+    --split val \
+    --out outputs/predictions/binary_val_scores_seed${seed}.csv \
+    --batch-size 32 \
+    --num-workers 2
+done
+```
+
+Evaluate whether the binary-only `p_ge1` score contains a severity signal. This analysis intentionally ignores `p_ge2` and `p_ge3` from the binary checkpoint:
+
+```bash
+for seed in 0 1 2; do
+  python -m src.evaluate_binary_baseline_severity \
+    --data-config configs/data.json \
+    --index outputs/index.csv \
+    --predictions outputs/predictions/binary_val_scores_seed${seed}.csv \
+    --split val \
+    --seed ${seed} \
+    --out outputs/metrics/binary_baseline_severity_val_seed${seed}.csv \
+    --plot
+done
+```
+
+Create and verify the main score-stratified graded budgets:
+
+```bash
+bash scripts/make_score_stratified_budgets.sh
+python -m src.verify_budgets --index outputs/index.csv --budget-root budgets/score_stratified_seed0
+```
+
+Run one validation-only mixed sanity experiment at budget 1024:
+
+```bash
+bash scripts/run_one_mixed_sanity.sh
+```
+
+Equivalent manual commands:
+
+```bash
+python -m src.train_ordinal \
+  --data-config configs/data.json \
+  --train-config configs/ordinal_template.json \
+  --seed 0 \
+  --budget-file budgets/score_stratified_seed0/budget_1024.csv \
+  --budget-name 1024 \
+  --strategy score_stratified \
+  --binary-checkpoint outputs/checkpoints/binary_seed0/best.pt \
+  --out-dir outputs/checkpoints/ordinal/score_stratified_seed0_budget1024 \
+  --batch-size-all 32 \
+  --batch-size-graded 16 \
+  --num-workers 2
+
+python -m src.evaluate \
+  --data-config configs/data.json \
+  --checkpoint outputs/checkpoints/ordinal/score_stratified_seed0_budget1024/best.pt \
+  --split val \
+  --out-dir outputs/metrics/score_stratified_seed0_budget1024_val \
+  --bootstrap 0 \
+  --batch-size 32 \
+  --num-workers 2
+```
+
+Generate the main mixed-curve job list. Budget 0 is the binary-only baseline and is excluded from ordinal training jobs:
+
+```bash
+python -m src.make_job_list \
+  --experiment-grid configs/experiment_grid.json \
+  --out outputs/job_lists/ordinal_jobs.csv \
+  --eval-out outputs/job_lists/eval_jobs.csv
+```
+
+Submit the main mixed curve only after the one-run sanity result is acceptable:
+
+```bash
+N=$(($(wc -l < outputs/job_lists/ordinal_jobs.csv)-2))
+sbatch --array=0-${N}%1 slurm/train_ordinal_array.sbatch
+```
+
+Later, run graded-only ablations and sampling comparisons from the same generated job list. Do not touch the test set until validation analysis and model-selection decisions are frozen.
+
 ## Budgets
 
 ```bash
@@ -88,7 +184,7 @@ python -m src.evaluate \
   --out-dir outputs/metrics/score_stratified_seed0_budget1024_test \
   --bootstrap 1000
 
-python -m src.collect_results --metrics-root outputs/metrics --checkpoints-root outputs/checkpoints --out outputs/results_all.csv
+python -m src.collect_results --metrics-root outputs/metrics --checkpoints-root outputs/checkpoints --binary-baseline-root outputs/metrics --out outputs/results_all.csv
 python -m src.plot_curves --results outputs/results_all.csv --out-dir outputs/figures
 python -m src.plateau --results outputs/results_all.csv --full-budget-name full --primary-metric quality_mean --higher-is-better true --out outputs/plateau_analysis.json
 ```

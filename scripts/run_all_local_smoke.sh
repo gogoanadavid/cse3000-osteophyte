@@ -62,3 +62,5 @@ fi
 "$PYTHON_BIN" tests/test_losses.py
 "$PYTHON_BIN" tests/test_metrics.py
 "$PYTHON_BIN" tests/test_sampling.py
+"$PYTHON_BIN" tests/test_mixed_supervision.py
+"$PYTHON_BIN" tests/test_binary_baseline_severity.py

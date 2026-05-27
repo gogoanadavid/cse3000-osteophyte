@@ -104,16 +104,16 @@ def make_budget_selection(
             raise ValueError(f"Scores missing for {missing} complete train samples")
         pos_df = merged[merged["any_binary_positive"] == 1].copy()
         neg = _shuffle(merged.loc[merged["any_binary_positive"] == 0, "h5_index"].astype(int).tolist(), rng)
+        pos_order: list[int] = []
         if len(pos_df) > 0:
             pos_df["bin"] = pd.qcut(pos_df[score_column].rank(method="first"), q=min(5, len(pos_df)), labels=False)
-        bins = []
-        for _, bdf in pos_df.groupby("bin"):
-            bins.append(_shuffle(bdf["h5_index"].astype(int).tolist(), rng))
-        pos_order = []
-        while any(bins):
-            for pool in bins:
-                if pool:
-                    pos_order.append(pool.pop(0))
+            bins = []
+            for _, bdf in pos_df.groupby("bin"):
+                bins.append(_shuffle(bdf["h5_index"].astype(int).tolist(), rng))
+            while any(bins):
+                for pool in bins:
+                    if pool:
+                        pos_order.append(pool.pop(0))
         selections = _incremental_two_pool(sizes, pos_order, neg, pos_fraction=0.85)
     elif strategy == "oracle_grade_stratified":
         grade_pools: dict[int, list[int]] = {}
@@ -163,10 +163,18 @@ def make_budget_selection(
             "n": int(len(sdf)),
             "any_binary_positive": int(sdf["any_binary_positive"].sum()) if len(sdf) else 0,
             "max_grade": {str(k): int(v) for k, v in sdf["max_grade"].value_counts().sort_index().items()},
+            "grade_ge1": int((sdf["max_grade"] >= 1).sum()),
+            "grade_ge2": int((sdf["max_grade"] >= 2).sum()),
+            "grade_ge3": int((sdf["max_grade"] >= 3).sum()),
             "locations": {},
         }
         for loc in locations:
-            counts["locations"][loc] = {str(k): int(v) for k, v in sdf[f"grade_{loc}"].value_counts().sort_index().items()}
+            counts["locations"][loc] = {
+                "grade_counts": {str(k): int(v) for k, v in sdf[f"grade_{loc}"].value_counts().sort_index().items()},
+                "ge1": int((sdf[f"grade_{loc}"] >= 1).sum()),
+                "ge2": int((sdf[f"grade_{loc}"] >= 2).sum()),
+                "ge3": int((sdf[f"grade_{loc}"] >= 3).sum()),
+            }
         manifest["counts"][name] = counts
     return selections, manifest
 
