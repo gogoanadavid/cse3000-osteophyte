@@ -1,6 +1,6 @@
 {
   "schema": "hierarchical_csv",
-  "h5_path": "/tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/data/all-for-hip-prediction-20260420-0.4mm-224x224.h5",
+  "h5_path": "/scratch/dgogoana/osteophytes_project/data/all-for-hip-prediction-20260420-0.4mm-224x224.h5",
   "scan_root": "scans",
   "labels_csv": "/tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/check_oai_osteophytes.csv",
   "split_file": "/tudelft.net/staff-umbrella/osteoarthritis2024/project/bsc2026/lists/all-for-hip-prediction-20260420-split123.txt",
