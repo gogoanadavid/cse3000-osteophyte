@@ -97,7 +97,13 @@ python -m src.verify_budgets --index outputs/index.csv --budget-root budgets/sco
 Run one validation-only mixed sanity experiment at budget 1024:
 
 ```bash
-bash scripts/run_one_mixed_sanity.sh
+sbatch slurm/one_mixed_sanity.sbatch
+```
+
+Do not run this directly on a DelftBlue login node. The script trains a model, so the Slurm wrapper carries the required GPU, CPU, memory, module, `PYTHONPATH`, and `TORCH_HOME` settings. To change the sanity budget or seed:
+
+```bash
+sbatch --export=ALL,SEED=1,BUDGET=2048 slurm/one_mixed_sanity.sbatch
 ```
 
 Equivalent manual commands:

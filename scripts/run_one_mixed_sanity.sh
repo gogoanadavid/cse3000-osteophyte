@@ -1,6 +1,17 @@
 #!/bin/bash
 set -euo pipefail
 
+# This script trains one mixed ordinal sanity model. On DelftBlue login nodes,
+# submit it through Slurm with:
+#   sbatch slurm/one_mixed_sanity.sbatch
+if [[ -z "${SLURM_JOB_ID:-}" && "$(hostname 2>/dev/null || true)" == login* && "${ALLOW_LOGIN_TRAINING:-0}" != "1" ]]; then
+  echo "Refusing to train on a DelftBlue login node." >&2
+  echo "Submit the GPU sanity job instead:" >&2
+  echo "  sbatch slurm/one_mixed_sanity.sbatch" >&2
+  echo "If you are intentionally inside an interactive compute allocation, SLURM_JOB_ID should be set." >&2
+  exit 2
+fi
+
 PYTHON_BIN="${PYTHON:-python3}"
 DATA_CONFIG="${DATA_CONFIG:-configs/data.json}"
 TRAIN_CONFIG="${TRAIN_CONFIG:-configs/ordinal_template.json}"
