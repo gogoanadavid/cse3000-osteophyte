@@ -32,6 +32,9 @@ mkdir -p /home/dgogoana/osteophytes_project/logs "$TORCH_HOME" outputs/checkpoin
 
 JOB_LIST="${JOB_LIST:-outputs/job_lists/ordinal_jobs.csv}"
 LINE="$(sed -n "$((SLURM_ARRAY_TASK_ID + 2))p" "$JOB_LIST")"
+# CSV files created on some systems may contain CRLF endings. Strip carriage
+# returns so the final field does not become a directory name ending in "\r".
+LINE="${LINE//$'\r'/}"
 IFS=, read -r seed strategy budget_name mode budget_file binary_checkpoint out_dir <<< "$LINE"
 
 python -m src.train_ordinal \

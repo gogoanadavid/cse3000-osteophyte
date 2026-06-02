@@ -32,6 +32,9 @@ mkdir -p /home/dgogoana/osteophytes_project/logs "$TORCH_HOME" outputs/metrics
 
 JOB_LIST="${JOB_LIST:-outputs/job_lists/eval_jobs.csv}"
 LINE="$(sed -n "$((SLURM_ARRAY_TASK_ID + 2))p" "$JOB_LIST")"
+# CSV files created on some systems may contain CRLF endings. Strip carriage
+# returns so the final field does not become a path ending in "\r".
+LINE="${LINE//$'\r'/}"
 IFS=, read -r checkpoint split out_dir <<< "$LINE"
 
 python -m src.evaluate \
