@@ -150,6 +150,32 @@ sbatch --array=0-${N}%1 slurm/train_ordinal_array.sbatch
 
 Later, run graded-only ablations and sampling comparisons from the same generated job list. Do not touch the test set until validation analysis and model-selection decisions are frozen.
 
+To extend the preliminary seed-0 curve to seeds 1 and 2 only, without rerunning graded-only or sampling ablations:
+
+```bash
+python -m src.make_job_list \
+  --experiment-grid configs/experiment_grid.json \
+  --main-curve-only \
+  --seeds 1,2 \
+  --eval-splits val \
+  --out outputs/job_lists/ordinal_jobs_main_curve_seeds1_2.csv \
+  --eval-out outputs/job_lists/eval_jobs_main_curve_seeds1_2_val.csv
+
+N=$(($(wc -l < outputs/job_lists/ordinal_jobs_main_curve_seeds1_2.csv)-2))
+sbatch --array=0-${N}%1 \
+  --export=ALL,JOB_LIST=outputs/job_lists/ordinal_jobs_main_curve_seeds1_2.csv \
+  slurm/train_ordinal_array.sbatch
+```
+
+After those jobs finish, evaluate validation only:
+
+```bash
+M=$(($(wc -l < outputs/job_lists/eval_jobs_main_curve_seeds1_2_val.csv)-2))
+sbatch --array=0-${M}%1 \
+  --export=ALL,JOB_LIST=outputs/job_lists/eval_jobs_main_curve_seeds1_2_val.csv,BOOTSTRAP=0 \
+  slurm/evaluate_array.sbatch
+```
+
 ## Budgets
 
 ```bash
